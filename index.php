@@ -41,9 +41,13 @@
 				</div>
 				<!-- Filter area -->
 				<div class="table-search">
-					<input type="text" name="search_txt" class="form-control w-25 d-inline" placeholder="Type text for filter ...">&nbsp;
-					<select class="form-select d-inline w-25">
-						<option selected>Choose Club</option>
+					<input type="text"
+							value="<?php echo isset($_SESSION['fName']) ? $_SESSION["fName"] : ''; ?>"
+							id="filter-name"
+							class="form-control w-25 d-inline"
+							placeholder="Name">&nbsp;
+					<select class="form-select d-inline w-25" id="filter-club">
+						<option value="0">Choose Club</option>
 						<?php
 							$sql = "select * from clubs";
 							$result = mysqli_query($conn, $sql);
@@ -56,9 +60,10 @@
 						</option>
 						<?php } ?>
 					</select>
+					<input type="hidden" id="filter-club-hid" value="<?php echo isset($_SESSION['fClub']) ? $_SESSION["fClub"] : ''; ?>">
 					&nbsp;
-					<select class="form-select d-inline w-25">
-						<option selected>Choose Position</option>
+					<select class="form-select d-inline w-25" id="filter-position">
+						<option value="0">Choose Position</option>
 						<?php
 							$sql = "select * from positions";
 							$result = mysqli_query($conn, $sql);
@@ -71,10 +76,16 @@
 						</option>
 						<?php } ?>
 					</select>
+					<input type="hidden" id="filter-position-hid" value="<?php echo isset($_SESSION['fPosition']) ? $_SESSION["fPosition"] : ''; ?>">
 					&nbsp;
-					<button type="button" class="btn btn-secondary">
+					<button type="button" class="btn btn-secondary" id="filter">
 						<i class="fa-solid fa-filter"></i>&nbsp;
 						Filter
+					</button>
+					&nbsp;
+					<button type="button" class="btn btn-secondary" id="reset">
+						<i class="fa-solid fa-eraser"></i>&nbsp;
+						Reset
 					</button>
 				</div>
 				<!-- List area -->
@@ -97,10 +108,26 @@
 						</thead>
 						<tbody>
 							<?php
+								$condArr = [];
+								$condWhere = "";
+								if (isset($_SESSION["fName"])){
+									array_push($condArr, " fb.fbname like '%" . $_SESSION["fName"] . "%' ");
+								}
+								if (isset($_SESSION["fClub"])){
+									array_push($condArr, " clb.clubid = " . $_SESSION["fClub"] . " ");
+								}
+								if (isset($_SESSION["fPosition"])){
+									array_push($condArr, " pos.postid = " . $_SESSION["fPosition"] . " ");
+								}
+								if(count($condArr) > 0){
+									$condWhere = " where " . join(" and ", $condArr);
+								}
+
 								$sql = "select fb.fbid, fb.fbname, clb.clubid, clb.clubname, pos.postid, pos.posname "
 										. " from footballers fb "
 										. " left join positions pos on fb.postid = pos.postid "
 										. " left join clubs clb on fb.clubid = clb.clubid "
+										. $condWhere
 										. " order by fb.fbid desc";
 								$result = mysqli_query($conn, $sql);
 								$i = 1;
@@ -109,7 +136,7 @@
 								<tr id="<?php echo $row["fbid"]; ?>">
 									<td>
 										<span class="custom-checkbox">
-										<input type="checkbox" class="user_checkbox" data-user-id="<?php echo $row["fbid"]; ?>">
+										<input type="checkbox" class="fbid_checkbox" data-fbid="<?php echo $row["fbid"]; ?>">
 										<label for="checkbox2"></label>
 										</span>
 									</td>
